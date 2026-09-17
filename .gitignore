@@ -20,3 +20,30 @@ STRUCTURE.md
 
 skills-lock.json
 
+# Build outputs
+bin/
+obj/
+out/
+publish/
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Test results
+TestResults/
+coverage/
+
+# NuGet
+*.nupkg
+
