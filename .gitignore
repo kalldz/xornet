@@ -1,0 +1,22 @@
+
+# Exclude Agent skills and Configuration files
+
+.agents/
+.kiro/
+.copilot/
+.codex/
+.claude/
+.gemini/
+.cursor/
+.cudebuddy/
+.codegraph/
+
+xornet.md
+AGENTS.md
+IMPLEMENTATION-PLAN.md
+PRD.md
+PLAN.md
+STRUCTURE.md
+
+skills-lock.json
+
