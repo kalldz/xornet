@@ -32,16 +32,24 @@ class Program
                 return;
             }
 
+            // Initialize services
+            var nameResolver = new NameResolver();
+
             // Initialize scanner
-            using var scanner = new Scanner(deviceManager);
+            using var scanner = new Scanner(deviceManager, nameResolver);
             scanner.Start();
+
+            // Initialize killer
+            using var killer = new Killer(scanner, deviceManager);
+            killer.Start();
 
             // Initialize TUI
             Application.Init();
-            Application.Run(new MainWindow(scanner));
+            Application.Run(new MainWindow(scanner, killer));
             Application.Shutdown();
 
             // Cleanup
+            killer.Stop();
             scanner.Stop();
         }
         catch (Exception ex)

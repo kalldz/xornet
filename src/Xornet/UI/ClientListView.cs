@@ -8,7 +8,9 @@ public class ClientListView : View
 {
     private readonly Scanner _scanner;
     private readonly ListView _listView;
-    private readonly List<Client> _displayList = new();
+    private readonly List<ClientWrapper> _displayList = new();
+
+    public event EventHandler<Client>? ClientSelected;
 
     public ClientListView(Scanner scanner)
     {
@@ -30,11 +32,19 @@ public class ClientListView : View
             Height = Dim.Fill()
         };
         _listView.SetSource(_displayList);
+        _listView.OpenSelectedItem += (e) => OnItemSelected(this, e);
 
         container.Add(_listView);
         Add(container);
 
         Refresh();
+    }
+
+    public Client? GetSelectedClient()
+    {
+        if (_listView.SelectedItem < 0 || _listView.SelectedItem >= _displayList.Count)
+            return null;
+        return _displayList[_listView.SelectedItem].Client;
     }
 
     public void Refresh()
@@ -43,32 +53,41 @@ public class ClientListView : View
         var clients = _scanner.GetClients()
             .Values
             .OrderByDescending(c => c.IsOnline)
+            .ThenBy(c => c.IsKilled)
             .ThenBy(c => c.Ip.ToString())
             .ToList();
 
-        _displayList.AddRange(clients);
+        _displayList.AddRange(clients.Select(c => new ClientWrapper(c)));
         _listView.SetSource(_displayList);
         _listView.SetNeedsDisplay();
+    }
+
+    private void OnItemSelected(object? sender, ListViewItemEventArgs e)
+    {
+        if (e.Value is ClientWrapper wrapper)
+        {
+            ClientSelected?.Invoke(this, wrapper.Client);
+        }
     }
 }
 
 public class ClientWrapper
 {
-    private readonly Client _client;
+    public Client Client { get; }
 
     public ClientWrapper(Client client)
     {
-        _client = client;
+        Client = client;
     }
 
     public override string ToString()
     {
-        var status = _client.IsOnline ? "ON" : "OFF";
-        var killed = _client.IsKilled ? " [KILLED]" : "";
-        var type = _client.Type.ToString().ToUpperInvariant();
-        var name = _client.Name != "Unknown" ? $" ({_client.Name})" : "";
-        var vendor = _client.Vendor != "NA" ? $" [{_client.Vendor}]" : "";
+        var status = Client.IsOnline ? "ON" : "OFF";
+        var killed = Client.IsKilled ? " [KILLED]" : "";
+        var type = Client.Type.ToString().ToUpperInvariant();
+        var name = Client.Name != "Unknown" ? $" ({Client.Name})" : "";
+        var vendor = Client.Vendor != "NA" ? $" [{Client.Vendor}]" : "";
 
-        return $"[{status}] {_client.Ip,-15} {_client.GetMacString(),-17} {type}{name}{vendor}{killed}";
+        return $"[{status}] {Client.Ip,-15} {Client.GetMacString(),-17} {type}{name}{vendor}{killed}";
     }
 }

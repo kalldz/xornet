@@ -16,6 +16,7 @@ public class Scanner : IDisposable
 {
     private readonly DeviceManager _deviceManager;
     private readonly XornetConfig _config;
+    private readonly NameResolver _nameResolver;
     private readonly ConcurrentDictionary<string, Client> _clients = new();
     private readonly HashSet<string> _processingIps = new();
     private readonly object _processingLock = new();
@@ -27,10 +28,11 @@ public class Scanner : IDisposable
 
     public event EventHandler? ClientsChanged;
 
-    public Scanner(DeviceManager deviceManager)
+    public Scanner(DeviceManager deviceManager, NameResolver? nameResolver = null)
     {
         _deviceManager = deviceManager ?? throw new ArgumentNullException(nameof(deviceManager));
         _config = ConfigStore.Load();
+        _nameResolver = nameResolver ?? new NameResolver();
         LoadSavedClients();
     }
 
@@ -195,11 +197,18 @@ public class Scanner : IDisposable
             _processingIps.Remove(arpPacket.SenderProtocolAddress?.ToString() ?? "");
         }
 
+        var senderIp = arpPacket.SenderProtocolAddress;
+        var senderMac = arpPacket.SenderHardwareAddress;
+        if (senderIp == null || senderMac == null)
+            return;
+
         if (!_clients.ContainsKey(mac))
         {
-            var client = new Client(arpPacket.SenderProtocolAddress, arpPacket.SenderHardwareAddress);
+            var client = new Client(senderIp, senderMac);
             if (_clients.TryAdd(mac, client))
             {
+                _nameResolver.ResolveVendorName(client);
+                _nameResolver.ResolveClientName(client);
                 ClientsChanged?.Invoke(this, EventArgs.Empty);
             }
         }
@@ -241,7 +250,12 @@ public class Scanner : IDisposable
 
                 var syntheticKey = $"ICMP_{ip}";
                 var client = new Client(ip, PhysicalAddress.None) { Type = Models.Enums.ClientType.Icmp };
-                return _clients.TryAdd(syntheticKey, client) ? client : null;
+                if (_clients.TryAdd(syntheticKey, client))
+                {
+                    _nameResolver.ResolveClientName(client);
+                    return client;
+                }
+                return null;
             }
             catch
             {
