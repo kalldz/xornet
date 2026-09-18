@@ -1,13 +1,22 @@
+```
+██╗  ██╗ ██████╗ ██████╗ ███╗   ██╗███████╗████████╗
+╚██╗██╔╝██╔═══██╗██╔══██╗████╗  ██║██╔════╝╚══██╔══╝
+ ╚███╔╝ ██║   ██║██████╔╝██╔██╗ ██║█████╗     ██║   
+ ██╔██╗ ██║   ██║██╔══██╗██║╚██╗██║██╔══╝     ██║   
+██╔╝ ██╗╚██████╔╝██║  ██║██║ ╚████║███████╗   ██║   
+╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝   ╚═╝    
+```
+
 # Xornet - Take Your Control Back
 
 ### Definition
 
 "Xornet" is a superuser program that allows someone to control a network. Xornet is written in C# with a TUI (Text User Interface).
-Xornet is targeted for release on Windows and Linux, with a focus on high optimization and stability.
+Xornet is targeted for release on Windows and Linux, with a focus on high optimization and stability. Xornet is still under development and still not stable yet.
 
 ### Features
 
-Xornet will have 4 core features: Scanner, Killer, Restore, and Defender.
+Xornet have 4 core features: Scanner, Killer, Restore, and Defender.
 
 - **Scanner** — a feature that scans a specific connected network. Scanner searches for connected devices across the available subnets.
 
@@ -17,7 +26,7 @@ Xornet will have 4 core features: Scanner, Killer, Restore, and Defender.
 
 - **Defender** — a feature that protects devices from ARP-spoofing attacks. Defender locks the IP and MAC address of important devices such as the default gateway and router. When Defender detects a flood of spoofed packets from an attacker, it blocks that device so the user is not affected by the attack.
 
-### How to run
+### How to run xornet
 
 
 ```
@@ -30,3 +39,13 @@ dotnet build
 # Run (need admin/root for Npcap/libpcap)
 dotnet run --project src/Xornet/Xornet.csproj
 ```
+
+## Support me
+
+[Trakteer](https://trakteer.id/vinitkanov) (Indonesia)
+
+[Saweria](https://saweria.co/vinitkanov) (Indonesia)
+
+[Ko-fi](https://ko-fi.com/kalldz) (International)
+
+
