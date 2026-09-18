@@ -25,8 +25,12 @@ public class Scanner : IDisposable
     private System.Timers.Timer? _backgroundScanTimer;
     private System.Timers.Timer? _isAliveTimer;
     private bool _isScanning;
+    private readonly List<PacketHandler> _externalHandlers = new();
 
     public event EventHandler? ClientsChanged;
+    public event PacketHandler? PacketArrived;
+
+    public delegate void PacketHandler(object sender, PacketCapture e);
 
     public Scanner(DeviceManager deviceManager, NameResolver? nameResolver = null)
     {
@@ -44,7 +48,7 @@ public class Scanner : IDisposable
         _isScanning = true;
 
         _device = _deviceManager.CreateDevice("arp", 1000);
-        _device.OnPacketArrival += OnPacketArrival;
+        _device.OnPacketArrival += OnInternalPacketArrival;
         _device.StartCapture();
 
         _ = ScanAsync();
@@ -70,11 +74,34 @@ public class Scanner : IDisposable
 
         if (_device != null)
         {
+            try { _device.OnPacketArrival -= OnInternalPacketArrival; } catch { }
             try { _device.StopCapture(); } catch { }
             try { _device.Close(); } catch { }
             try { _device.Dispose(); } catch { }
             _device = null;
         }
+    }
+
+    public void AddPacketHandler(PacketHandler handler)
+    {
+        _externalHandlers.Add(handler);
+    }
+
+    public void RemovePacketHandler(PacketHandler handler)
+    {
+        _externalHandlers.Remove(handler);
+    }
+
+    private void OnInternalPacketArrival(object sender, PacketCapture e)
+    {
+        OnPacketArrival(sender, e);
+
+        foreach (var handler in _externalHandlers.ToList())
+        {
+            try { handler(sender, e); } catch { }
+        }
+
+        PacketArrived?.Invoke(sender, e);
     }
 
     public async Task ScanAsync()

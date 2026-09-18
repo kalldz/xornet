@@ -49,12 +49,23 @@ class Program
             // Initialize ARP spoof detector
             using var detector = new ArpSpoofDetector(scanner, deviceManager);
 
+            // Initialize sniffer
+            using var sniffer = new SnifferService(scanner);
+
+            // Initialize bandwidth monitor
+            using var bandwidth = new BandwidthService();
+            bandwidth.Start();
+            scanner.PacketArrived += bandwidth.OnPacketArrival;
+
             // Initialize TUI
             Application.Init();
-            Application.Run(new MainWindow(scanner, killer, defender, detector));
+            Application.Run(new MainWindow(scanner, killer, defender, detector, sniffer));
             Application.Shutdown();
 
             // Cleanup
+            scanner.PacketArrived -= bandwidth.OnPacketArrival;
+            bandwidth.Stop();
+            sniffer.StopCapture();
             detector.Stop();
             defender.Stop();
             killer.Stop();
