@@ -43,12 +43,20 @@ class Program
             using var killer = new Killer(scanner, deviceManager);
             killer.Start();
 
+            // Initialize defender
+            using var defender = new Defender(deviceManager);
+
+            // Initialize ARP spoof detector
+            using var detector = new ArpSpoofDetector(scanner, deviceManager);
+
             // Initialize TUI
             Application.Init();
-            Application.Run(new MainWindow(scanner, killer));
+            Application.Run(new MainWindow(scanner, killer, defender, detector));
             Application.Shutdown();
 
             // Cleanup
+            detector.Stop();
+            defender.Stop();
             killer.Stop();
             scanner.Stop();
         }
