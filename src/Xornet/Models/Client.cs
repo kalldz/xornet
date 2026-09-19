@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.NetworkInformation;
 using Xornet.Models.Enums;
 using Xornet.Services;
+using Xornet.Utils;
 
 namespace Xornet.Models;
 
@@ -41,6 +42,11 @@ public class Client
     public string GetMacString()
     {
         return Mac.ToString().ToUpperInvariant();
+    }
+
+    public string GetFormattedMacString()
+    {
+        return Mac.FormatWithSeparator();
     }
 
     public string GetOui()

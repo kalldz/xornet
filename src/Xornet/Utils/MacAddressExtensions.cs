@@ -16,6 +16,15 @@ public static class MacAddressExtensions
         return clean;
     }
 
+    public static string FormatWithSeparator(this PhysicalAddress mac)
+    {
+        var clean = FormatMac(mac.ToString());
+        if (clean.Length != 12)
+            return mac.ToString().ToUpperInvariant();
+
+        return string.Join(":", Enumerable.Range(0, 6).Select(i => clean.Substring(i * 2, 2)));
+    }
+
     public static string GetOui(this PhysicalAddress mac)
     {
         var macStr = FormatMac(mac.ToString());
