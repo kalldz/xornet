@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Net;
+using System.Text.Json;
 using Xornet.Models;
 
 namespace Xornet.Services;
@@ -15,6 +16,94 @@ public class NameResolver
     {
         _ouiFilePath = ouiFilePath ?? Path.Combine(AppContext.BaseDirectory, "assets", "oui-database.txt");
         LoadVendorDictionary();
+    }
+
+    private void LoadVendorDictionary()
+    {
+        var jsonPath = Path.Combine(AppContext.BaseDirectory, "assets", "mac-vendors.json");
+        if (File.Exists(jsonPath))
+        {
+            try
+            {
+                var json = File.ReadAllText(jsonPath);
+                var entries = JsonSerializer.Deserialize<List<MacVendorEntry>>(json);
+                if (entries != null)
+                {
+                    var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var entry in entries)
+                    {
+                        var oui = entry.MacPrefix.Replace(":", "").Replace("-", "").ToUpperInvariant();
+                        if (oui.Length == 6 && !dict.ContainsKey(oui))
+                            dict[oui] = entry.VendorName;
+                    }
+                    _vendorDictionary = dict;
+                    return;
+                }
+            }
+            catch
+            {
+                // Fall back to text OUI database
+            }
+        }
+
+        LoadTextVendorDictionary();
+    }
+
+    private class MacVendorEntry
+    {
+        public string MacPrefix { get; set; } = string.Empty;
+        public string VendorName { get; set; } = string.Empty;
+    }
+
+    private void LoadTextVendorDictionary()
+    {
+        if (!File.Exists(_ouiFilePath))
+        {
+            // Try alternative paths
+            var altPaths = new[]
+            {
+                Path.Combine(Directory.GetCurrentDirectory(), "assets", "oui-database.txt"),
+                Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "assets", "oui-database.txt"),
+            };
+
+            foreach (var alt in altPaths)
+            {
+                if (File.Exists(alt))
+                {
+                    _ouiFilePath = alt;
+                    break;
+                }
+            }
+        }
+
+        if (!File.Exists(_ouiFilePath))
+        {
+            _vendorDictionary = new Dictionary<string, string>();
+            return;
+        }
+
+        try
+        {
+            var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var line in File.ReadLines(_ouiFilePath))
+            {
+                if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#"))
+                    continue;
+
+                var parts = line.Split('|', 2);
+                if (parts.Length == 2)
+                {
+                    var oui = parts[0].Trim().ToUpperInvariant();
+                    var vendor = parts[1].Trim();
+                    dict[oui] = vendor;
+                }
+            }
+            _vendorDictionary = dict;
+        }
+        catch
+        {
+            _vendorDictionary = new Dictionary<string, string>();
+        }
     }
 
     public void ResolveVendorName(Client client)
@@ -74,54 +163,4 @@ public class NameResolver
         }
     }
 
-    private void LoadVendorDictionary()
-    {
-        if (!File.Exists(_ouiFilePath))
-        {
-            // Try alternative paths
-            var altPaths = new[]
-            {
-                Path.Combine(Directory.GetCurrentDirectory(), "assets", "oui-database.txt"),
-                Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "assets", "oui-database.txt"),
-            };
-
-            foreach (var alt in altPaths)
-            {
-                if (File.Exists(alt))
-                {
-                    _ouiFilePath = alt;
-                    break;
-                }
-            }
-        }
-
-        if (!File.Exists(_ouiFilePath))
-        {
-            _vendorDictionary = new Dictionary<string, string>();
-            return;
-        }
-
-        try
-        {
-            var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var line in File.ReadLines(_ouiFilePath))
-            {
-                if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#"))
-                    continue;
-
-                var parts = line.Split('|', 2);
-                if (parts.Length == 2)
-                {
-                    var oui = parts[0].Trim().ToUpperInvariant();
-                    var vendor = parts[1].Trim();
-                    dict[oui] = vendor;
-                }
-            }
-            _vendorDictionary = dict;
-        }
-        catch
-        {
-            _vendorDictionary = new Dictionary<string, string>();
-        }
-    }
 }
