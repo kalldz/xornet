@@ -18,7 +18,7 @@ public class ShieldView : View
     private readonly Label _spoofingStatusLabel;
     private readonly ListView _protectedListView;
     private readonly ListView _attackersListView;
-    private readonly List<ClientWrapper> _protectedList = new();
+    private readonly List<string> _protectedList = new();
     private readonly List<string> _attackersList = new();
 
     public ShieldView(Scanner scanner, Defender defender, ArpSpoofDetector detector)
@@ -189,7 +189,10 @@ public class ShieldView : View
             var mac = client.GetMacString();
             if (_detector.IsProtected(mac))
             {
-                _protectedList.Add(new ClientWrapper(client));
+                var status = client.IsOnline ? "ON" : "OFF";
+                var name = client.Name != "Unknown" ? $" ({client.Name})" : "";
+                var vendor = client.Vendor != "NA" ? $" [{client.Vendor}]" : "";
+                _protectedList.Add($"[{status}] {client.Ip,-15} {client.GetFormattedMacString(),-17} {name}{vendor}");
             }
         }
 

@@ -13,6 +13,7 @@ public class DashboardView : View
     private readonly Label _titleLabel;
     private readonly Button _scanButton;
     private readonly Button _killButton;
+    private readonly Button _killAllButton;
     private readonly Button _restoreButton;
     private readonly Button _restoreAllButton;
     private readonly Label _statusLabel;
@@ -49,10 +50,18 @@ public class DashboardView : View
         };
         _killButton.Clicked += OnKillClicked;
 
+        // Kill All button
+        _killAllButton = new Button("Kill _All")
+        {
+            X = Pos.Right(_killButton) + 2,
+            Y = 3
+        };
+        _killAllButton.Clicked += OnKillAllClicked;
+
         // Restore button
         _restoreButton = new Button("_Restore")
         {
-            X = Pos.Right(_killButton) + 2,
+            X = Pos.Right(_killAllButton) + 2,
             Y = 3
         };
         _restoreButton.Clicked += OnRestoreClicked;
@@ -97,7 +106,7 @@ public class DashboardView : View
         };
         _clientListView.ClientSelected += OnClientSelected;
 
-        Add(_titleLabel, _scanButton, _killButton, _restoreButton, _restoreAllButton,
+        Add(_titleLabel, _scanButton, _killButton, _killAllButton, _restoreButton, _restoreAllButton,
             _statusLabel, _countLabel, _killedLabel, _clientListView);
 
         Refresh();
@@ -171,9 +180,30 @@ public class DashboardView : View
         UpdateCount();
     }
 
+    private void OnKillAllClicked()
+    {
+        var eligible = _scanner.GetClients().Values
+            .Where(c => c.IsOnline && !c.IsKilled && !c.IsGateway() && !c.IsLocalDevice())
+            .ToList();
+
+        if (eligible.Count == 0)
+        {
+            _statusLabel.Text = "Status: No eligible devices to kill";
+            return;
+        }
+
+        foreach (var client in eligible)
+        {
+            _killer.Kill(client);
+        }
+
+        _statusLabel.Text = $"Status: Killed {eligible.Count} device(s)";
+        UpdateCount();
+    }
+
     private void OnClientSelected(object? sender, Client client)
     {
-        _statusLabel.Text = $"Status: Selected {client.Ip} [{client.GetMacString()}]";
+        _statusLabel.Text = $"Status: Selected {client.Ip} [{client.GetFormattedMacString()}]";
     }
 
     private void UpdateCount()

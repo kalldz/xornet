@@ -1,3 +1,4 @@
+using System.Data;
 using Terminal.Gui;
 using Xornet.Engine;
 using Xornet.Models;
@@ -7,8 +8,9 @@ namespace Xornet.UI;
 public class ClientListView : View
 {
     private readonly Scanner _scanner;
-    private readonly ListView _listView;
-    private readonly List<ClientWrapper> _displayList = new();
+    private readonly TableView _tableView;
+    private readonly DataTable _dataTable;
+    private readonly List<Client> _clientList = new();
 
     public event EventHandler<Client>? ClientSelected;
 
@@ -24,17 +26,36 @@ public class ClientListView : View
             Height = Dim.Fill()
         };
 
-        _listView = new ListView()
+        _dataTable = new DataTable();
+        _dataTable.Columns.Add("IP", typeof(string));
+        _dataTable.Columns.Add("MAC", typeof(string));
+        _dataTable.Columns.Add("Hostname", typeof(string));
+        _dataTable.Columns.Add("Vendor", typeof(string));
+        _dataTable.Columns.Add("Status", typeof(string));
+
+        _tableView = new TableView(_dataTable)
         {
             X = 0,
             Y = 0,
             Width = Dim.Fill(),
             Height = Dim.Fill()
         };
-        _listView.SetSource(_displayList);
-        _listView.OpenSelectedItem += (e) => OnItemSelected(this, e);
 
-        container.Add(_listView);
+        _tableView.Style.ShowHorizontalHeaderUnderline = true;
+        _tableView.Style.ShowVerticalHeaderLines = true;
+
+        _tableView.KeyPress += (e) =>
+        {
+            if (e.KeyEvent.Key == Key.Enter)
+            {
+                var client = GetSelectedClient();
+                if (client != null)
+                    ClientSelected?.Invoke(this, client);
+                e.Handled = true;
+            }
+        };
+
+        container.Add(_tableView);
         Add(container);
 
         Refresh();
@@ -42,14 +63,16 @@ public class ClientListView : View
 
     public Client? GetSelectedClient()
     {
-        if (_listView.SelectedItem < 0 || _listView.SelectedItem >= _displayList.Count)
+        if (_tableView.SelectedRow < 0 || _tableView.SelectedRow >= _clientList.Count)
             return null;
-        return _displayList[_listView.SelectedItem].Client;
+        return _clientList[_tableView.SelectedRow];
     }
 
     public void Refresh()
     {
-        _displayList.Clear();
+        _clientList.Clear();
+        _dataTable.Rows.Clear();
+
         var clients = _scanner.GetClients()
             .Values
             .OrderByDescending(c => c.IsOnline)
@@ -57,37 +80,18 @@ public class ClientListView : View
             .ThenBy(c => c.Ip.ToString())
             .ToList();
 
-        _displayList.AddRange(clients.Select(c => new ClientWrapper(c)));
-        _listView.SetSource(_displayList);
-        _listView.SetNeedsDisplay();
-    }
-
-    private void OnItemSelected(object? sender, ListViewItemEventArgs e)
-    {
-        if (e.Value is ClientWrapper wrapper)
+        foreach (var client in clients)
         {
-            ClientSelected?.Invoke(this, wrapper.Client);
+            _clientList.Add(client);
+            _dataTable.Rows.Add(
+                client.Ip.ToString(),
+                client.GetFormattedMacString(),
+                client.Name,
+                client.Vendor,
+                client.IsOnline ? "Online" : "Away"
+            );
         }
-    }
-}
 
-public class ClientWrapper
-{
-    public Client Client { get; }
-
-    public ClientWrapper(Client client)
-    {
-        Client = client;
-    }
-
-    public override string ToString()
-    {
-        var status = Client.IsOnline ? "ON" : "OFF";
-        var killed = Client.IsKilled ? " [KILLED]" : "";
-        var type = Client.Type.ToString().ToUpperInvariant();
-        var name = Client.Name != "Unknown" ? $" ({Client.Name})" : "";
-        var vendor = Client.Vendor != "NA" ? $" [{Client.Vendor}]" : "";
-
-        return $"[{status}] {Client.Ip,-15} {Client.GetMacString(),-17} {type}{name}{vendor}{killed}";
+        _tableView.SetNeedsDisplay();
     }
 }
