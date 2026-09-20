@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <AssemblyName>Xornet</AssemblyName>
     <RootNamespace>Xornet</RootNamespace>
   </PropertyGroup>
@@ -9,7 +9,6 @@
   <ItemGroup>
     <PackageReference Include="SharpPcap" Version="6.3.0" />
     <PackageReference Include="PacketDotNet" Version="1.4.7" />
-    <PackageReference Include="Terminal.Gui" Version="1.17.1" />
   </ItemGroup>
 
   <ItemGroup>
