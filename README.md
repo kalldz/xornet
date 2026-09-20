@@ -11,7 +11,7 @@
 
 ### Definition
 
-"Xornet" is a superuser program that allows someone to control a network. Xornet is written in C# with a TUI (Text User Interface).
+"Xornet" is a superuser program that allows someone to control a network. Xornet is written in C# with Avalonia UI (cross-platform desktop GUI).
 Xornet is targeted for release on Windows and Linux, with a focus on high optimization and stability. Xornet is still under development and still not stable yet.
 
 ### Features
@@ -36,8 +36,8 @@ dotnet restore
 # Build
 dotnet build
 
-# Run (need admin/root for Npcap/libpcap)
-dotnet run --project src/Xornet/Xornet.csproj
+# Run Desktop GUI (need admin/root for Npcap/libpcap)
+dotnet run --project src/Xornet.Desktop/Xornet.Desktop.csproj
 ```
 
 ## Support me
