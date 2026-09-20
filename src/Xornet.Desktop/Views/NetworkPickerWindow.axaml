@@ -1,0 +1,34 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Xornet.Desktop.Views.NetworkPickerWindow"
+        Title="Select Network Interface"
+        Width="600"
+        Height="400"
+        WindowStartupLocation="CenterScreen">
+
+  <Grid RowDefinitions="Auto,*,Auto" Margin="16">
+    <TextBlock Grid.Row="0"
+               Text="Select a network interface to monitor:"
+               FontSize="16"
+               Margin="0,0,0,12"/>
+
+    <Border Grid.Row="1" Background="#1E1E1E" CornerRadius="8">
+      <ListBox x:Name="DeviceListBox" Margin="8">
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <StackPanel>
+              <TextBlock Text="{ReflectionBinding FriendlyName}" FontWeight="Bold"/>
+              <TextBlock Text="{ReflectionBinding Description}" FontSize="12" Foreground="#888"/>
+              <TextBlock Text="{ReflectionBinding Gateway}" FontSize="12" Foreground="#666"/>
+            </StackPanel>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </Border>
+
+    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+      <Button x:Name="SelectButton" Content="Select" IsDefault="True" Margin="0,0,8,0"/>
+      <Button x:Name="CancelButton" Content="Cancel" IsCancel="True"/>
+    </StackPanel>
+  </Grid>
+</Window>

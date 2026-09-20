@@ -1,0 +1,83 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Xornet.Desktop.ViewModels"
+             x:Class="Xornet.Desktop.Views.ShieldView"
+             x:DataType="vm:ShieldViewModel">
+
+  <Grid RowDefinitions="Auto,Auto,Auto,*,*" Margin="16">
+    <!-- Title -->
+    <TextBlock Grid.Row="0"
+               Text="Shield - ARP Defense"
+               FontSize="24"
+               FontWeight="Bold"
+               Margin="0,0,0,16"/>
+
+    <!-- Status Cards -->
+    <Grid Grid.Row="1" ColumnDefinitions="*,*,*" Margin="0,0,0,16">
+      <Border Grid.Column="0" Background="#2D2D2D" CornerRadius="8" Padding="16" Margin="0,0,8,0">
+        <StackPanel>
+          <TextBlock Text="Defender" Foreground="#888" FontSize="12"/>
+          <TextBlock Text="{Binding DefenderStatus}" FontSize="20" FontWeight="Bold"/>
+          <Button Content="{Binding IsDefending}"
+                  Command="{Binding ToggleDefenderCommand}"
+                  Margin="0,8,0,0">
+            <Button.ContentTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding}" />
+              </DataTemplate>
+            </Button.ContentTemplate>
+          </Button>
+        </StackPanel>
+      </Border>
+      <Border Grid.Column="1" Background="#2D2D2D" CornerRadius="8" Padding="16" Margin="4,0,4,0">
+        <StackPanel>
+          <TextBlock Text="Detector" Foreground="#888" FontSize="12"/>
+          <TextBlock Text="{Binding DetectorStatus}" FontSize="20" FontWeight="Bold"/>
+          <Button Content="{Binding IsDetecting}"
+                  Command="{Binding ToggleDetectorCommand}"
+                  Margin="0,8,0,0">
+            <Button.ContentTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding}" />
+              </DataTemplate>
+            </Button.ContentTemplate>
+          </Button>
+        </StackPanel>
+      </Border>
+      <Border Grid.Column="2" Background="#2D2D2D" CornerRadius="8" Padding="16" Margin="8,0,0,0">
+        <StackPanel>
+          <TextBlock Text="Spoofing Status" Foreground="#888" FontSize="12"/>
+          <TextBlock Text="{Binding SpoofingStatus}" FontSize="16" FontWeight="Bold"/>
+        </StackPanel>
+      </Border>
+    </Grid>
+
+    <!-- Alerts -->
+    <Grid Grid.Row="2" Margin="0,0,0,8">
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Grid.Column="0" Text="Recent Alerts" FontSize="16" FontWeight="Bold"/>
+        <Button Grid.Column="1" Content="Clear" Command="{Binding ClearAlertsCommand}"/>
+      </Grid>
+    </Grid>
+
+    <Border Grid.Row="3" Background="#1E1E1E" CornerRadius="8" Margin="0,0,0,8">
+      <ListBox ItemsSource="{Binding Alerts}" MaxHeight="150"/>
+    </Border>
+
+    <!-- Attackers -->
+    <Grid Grid.Row="4" ColumnDefinitions="*,*">
+      <Border Background="#1E1E1E" CornerRadius="8" Margin="0,0,4,0">
+        <Grid RowDefinitions="Auto,*">
+          <TextBlock Grid.Row="0" Text="Detected Attackers" FontWeight="Bold" Margin="12,8"/>
+          <ListBox Grid.Row="1" ItemsSource="{Binding Attackers}" Margin="8"/>
+        </Grid>
+      </Border>
+      <Border Background="#1E1E1E" CornerRadius="8" Margin="4,0,0,0">
+        <Grid RowDefinitions="Auto,*">
+          <TextBlock Grid.Row="0" Text="Protected Devices" FontWeight="Bold" Margin="12,8"/>
+          <ListBox Grid.Row="1" ItemsSource="{Binding ProtectedDevices}" Margin="8"/>
+        </Grid>
+      </Border>
+    </Grid>
+  </Grid>
+</UserControl>

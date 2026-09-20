@@ -1,0 +1,55 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Xornet.Desktop.ViewModels"
+             x:Class="Xornet.Desktop.Views.SnifferView"
+             x:DataType="vm:SnifferViewModel">
+
+  <Grid RowDefinitions="Auto,Auto,*" Margin="16">
+    <!-- Title -->
+    <TextBlock Grid.Row="0"
+               Text="Packet Sniffer"
+               FontSize="24"
+               FontWeight="Bold"
+               Margin="0,0,0,16"/>
+
+    <!-- Toolbar -->
+    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto" Margin="0,0,0,8">
+      <Button Grid.Column="0"
+                Command="{Binding ToggleCaptureCommand}"
+                Margin="0,0,8,0">
+          <TextBlock Text="{Binding IsCapturing, StringFormat='{}{0:Start;Stop}'}" />
+        </Button>
+      <Button Grid.Column="1"
+              Content="Clear"
+              Command="{Binding ClearCommand}"
+              Margin="0,0,8,0"/>
+      <TextBox Grid.Column="2"
+               PlaceholderText="Filter by protocol, IP, or port..."
+               Text="{Binding FilterText}"
+               VerticalAlignment="Center"/>
+      <TextBlock Grid.Column="3"
+                 Text="{Binding PacketCount, StringFormat='{}{0} packets'}"
+                 VerticalAlignment="Center"
+                 Foreground="#888"/>
+    </Grid>
+
+    <!-- Packet List -->
+    <Border Grid.Row="2" Background="#1E1E1E" CornerRadius="8">
+      <ListBox ItemsSource="{Binding Packets}"
+               SelectedItem="{Binding SelectedPacket}">
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <Grid ColumnDefinitions="100,80,*,*,80,2*">
+              <TextBlock Grid.Column="0" Text="{Binding Timestamp, StringFormat='{}{0:HH:mm:ss.fff}'}" Foreground="#CCC" FontSize="11" FontFamily="Consolas"/>
+              <TextBlock Grid.Column="1" Text="{Binding Protocol}" Foreground="#2196F3" FontWeight="Bold" FontSize="11"/>
+              <TextBlock Grid.Column="2" Text="{Binding SourceIp}" Foreground="#FFF" FontSize="11"/>
+              <TextBlock Grid.Column="3" Text="{Binding DestinationIp}" Foreground="#FFF" FontSize="11"/>
+              <TextBlock Grid.Column="4" Text="{Binding Length}" Foreground="#888" FontSize="11"/>
+              <TextBlock Grid.Column="5" Text="{Binding Info}" Foreground="#AAA" FontSize="11" TextTrimming="CharacterEllipsis"/>
+            </Grid>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </Border>
+  </Grid>
+</UserControl>
