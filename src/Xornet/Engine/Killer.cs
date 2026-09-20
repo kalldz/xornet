@@ -20,9 +20,11 @@ public class Killer : IDisposable
     private readonly ConcurrentDictionary<string, DateTime> _lastSpoofTime = new();
     private readonly ConcurrentDictionary<string, bool> _burstDone = new();
     private readonly SemaphoreSlim _newVictimSignal = new(0, 1);
+    private readonly object _deviceLock = new();
     private CancellationTokenSource? _cancellationTokenSource;
     private Task? _killerTask;
     private LibPcapLiveDevice? _device;
+    private bool _isStopping;
 
     public Killer(Scanner scanner, DeviceManager deviceManager)
     {
@@ -42,17 +44,26 @@ public class Killer : IDisposable
 
     public void Stop()
     {
+        lock (_deviceLock)
+        {
+            if (_isStopping) return;
+            _isStopping = true;
+        }
+
         _cancellationTokenSource?.Cancel();
         _killerTask?.Wait(TimeSpan.FromSeconds(2));
         _killerTask?.Dispose();
         _killerTask = null;
 
-        if (_device != null)
+        lock (_deviceLock)
         {
-            try { _device.StopCapture(); } catch { }
-            try { _device.Close(); } catch { }
-            try { _device.Dispose(); } catch { }
-            _device = null;
+            if (_device != null)
+            {
+                try { _device.StopCapture(); } catch { }
+                try { _device.Close(); } catch { }
+                try { _device.Dispose(); } catch { }
+                _device = null;
+            }
         }
 
         _cancellationTokenSource?.Dispose();
@@ -96,12 +107,21 @@ public class Killer : IDisposable
         _lastSpoofTime.TryRemove(client.GetMacString(), out _);
         _burstDone.TryRemove(client.GetMacString(), out _);
 
-        RestoreTarget(client);
+        lock (_deviceLock)
+        {
+            if (!_isStopping && _device != null)
+                RestoreTarget(client);
+        }
     }
 
     public void UnKillAll()
     {
-        foreach (var kvp in _scanner.GetClients())
+        lock (_deviceLock)
+        {
+            if (_isStopping || _device == null) return;
+        }
+
+        foreach (var kvp in _scanner.GetClients().ToList())
         {
             var client = kvp.Value;
             if (client.IsKilled)
@@ -110,7 +130,12 @@ public class Killer : IDisposable
                 _killedClientMacs.TryRemove(kvp.Key, out _);
                 _lastSpoofTime.TryRemove(kvp.Key, out _);
                 _burstDone.TryRemove(kvp.Key, out _);
-                RestoreTarget(client);
+
+                lock (_deviceLock)
+                {
+                    if (!_isStopping && _device != null)
+                        RestoreTarget(client);
+                }
             }
         }
     }
@@ -119,7 +144,7 @@ public class Killer : IDisposable
 
     private async Task StartKillerJob()
     {
-        if (_device == null || _cancellationTokenSource == null) return;
+        if (_cancellationTokenSource == null) return;
 
         while (!_cancellationTokenSource.Token.IsCancellationRequested)
         {
@@ -130,19 +155,30 @@ public class Killer : IDisposable
                 var clients = _scanner.GetClients();
                 var killedMacs = _killedClientMacs.Keys.ToList();
 
-                Parallel.ForEach(killedMacs, killedMac =>
+                foreach (var killedMac in killedMacs)
                 {
-                    if (!clients.TryGetValue(killedMac, out var client)) return;
-                    if (!client.IsKilled) return;
+                    if (_cancellationTokenSource.Token.IsCancellationRequested) break;
+                    if (!clients.TryGetValue(killedMac, out var client)) continue;
+                    if (!client.IsKilled) continue;
 
                     var lastSpoof = _lastSpoofTime.GetOrAdd(killedMac, DateTime.MinValue);
                     if ((DateTime.UtcNow - lastSpoof).TotalMilliseconds >= _config.SpoofIntervalMs)
                     {
-                        SpoofVictim(client);
-                        SpoofGateway(client);
-                        _lastSpoofTime[killedMac] = DateTime.UtcNow;
+                        lock (_deviceLock)
+                        {
+                            if (!_isStopping && _device != null)
+                            {
+                                try
+                                {
+                                    SpoofVictim(client);
+                                    SpoofGateway(client);
+                                    _lastSpoofTime[killedMac] = DateTime.UtcNow;
+                                }
+                                catch { /* ignore send errors during shutdown */ }
+                            }
+                        }
                     }
-                });
+                }
 
                 try
                 {
