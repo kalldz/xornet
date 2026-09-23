@@ -10,6 +10,8 @@
 # Xornet - Take Your Control Back
 
 ### Definition
+<img src="assets/logo.png" alt="Description" width="300">
+
 
 "Xornet" is a superuser program that allows someone to control a network. Xornet is written in C# with Avalonia UI (cross-platform desktop GUI).
 Xornet is targeted for release on Windows and Linux, with a focus on high optimization and stability. Xornet is still under development and still not stable yet.
