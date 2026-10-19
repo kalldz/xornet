@@ -16,6 +16,8 @@
 "Xornet" is a superuser program that allows someone to control a network. Xornet is written in C# with Avalonia UI (cross-platform desktop GUI).
 Xornet is targeted for release on Windows and Linux, with a focus on high optimization and stability. Xornet is still under development and still not stable yet.
 
+Xornet is a rewrite from Cutware's architecture. 
+
 ### Features
 
 Xornet have 4 core features: Scanner, Killer, Restore, and Defender.
